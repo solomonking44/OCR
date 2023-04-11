@@ -35,7 +35,7 @@ def index():
     if request.method == 'POST':
         file = request.files['image']
         
-        
+        # text = ''
         with app.app_context():
             db.create_all()
             upload = Upload(filename=file.filename, data=file.read())
@@ -49,11 +49,13 @@ def index():
                 # image = cv.imread(f.write(download.data),0)
                 # text = pytesseract.image_to_string(f.write(download.data))
             image = cv.imread(f'./uploads/{download.filename}.png',0)
+            # if image:
+                
             text = pytesseract.image_to_string(image)
                 
                 # grey = cv.COLOR_BGR2GREY(image)
             
-        return text
+        return send_file(open(f"{download.filename}.txt", 'w'))
     
     return render_template('index.html')
     
