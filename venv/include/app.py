@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, send_file
 from flask_sqlalchemy import SQLAlchemy
 import cv2 as cv
 from io import BytesIO
+import pytesseract
 #create the app
 from PIL import Image
 app = Flask(__name__)
@@ -43,10 +44,16 @@ def index():
             
             #process the image
             download = Upload.query.filter_by(filename=file.filename).first()
-            img = Image.open(file.data)
-            # cv.imshow("Hekk", file)
+            with open(f"./uploads/{download.filename}.png", "wb") as f:
+                f.write(download.data)
+                # image = cv.imread(f.write(download.data),0)
+                # text = pytesseract.image_to_string(f.write(download.data))
+            image = cv.imread(f'./uploads/{download.filename}.png',0)
+            text = pytesseract.image_to_string(image)
+                
+                # grey = cv.COLOR_BGR2GREY(image)
             
-        # return "Worked"
+        return text
     
     return render_template('index.html')
     
