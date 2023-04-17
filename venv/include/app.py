@@ -4,7 +4,7 @@ import cv2 as cv
 from io import BytesIO
 import pytesseract
 from PIL import Image
-import random
+import os
 
 #flask app declaration
 app = Flask(__name__)
@@ -66,7 +66,7 @@ def index():
             #
             
             #fetch info from table filter by filename
-            download = Upload.query.filter_by(filename=random_number).first()
+            download = Upload.query.filter_by(filename=file.filename).first()
             
             #store image in uploads
             with open(f"./uploads/{download.filename}.png", "wb") as f:
@@ -93,16 +93,28 @@ def index():
             #write text in file
             image_text.write(text)
             
+            #
+            #
+            # TESTS #
             #testing#
-            records = Upload.query.all()
+            # records = Upload.query.all()
             # print(records)
-            for record in records:
-                print(record)
-            print(text)
-            print(download.filename)
-      
-            #return the file to download
-            return send_file(f"./text_files/{cut_name}.txt", as_attachment=True)
+            # for record in records:
+                # print(record)
+            # print(text)
+            # print(cut_name)
+            # print(download.filename)
+            #
+            #
+            
+            #path to text file
+            path = f"./text_files/{cut_name}.txt"
+     
+            #convert the file to binary so that it can be sent
+            text_document = open(path, 'rb')
+            
+            #return the text file as download
+            return send_file(text_document, as_attachment=True, download_name=f"{cut_name}.txt", mimetype="text/plain")
         
     #return index page
     return render_template('index.html')
