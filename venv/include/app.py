@@ -1,122 +1,68 @@
 from flask import Flask, render_template, request, send_file
-from flask_sqlalchemy import SQLAlchemy
-import cv2 as cv
-from io import BytesIO
-import pytesseract
-from PIL import Image
-import os
+from flask_restful import Resource, Api
 
 #flask app declaration
 app = Flask(__name__)
 
-#configure the SQLite database, relative to the app instance folder
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ocr.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+#api configuration
+api = Api(app)
 
-#create the extension
-db = SQLAlchemy(app)
 
-#Database model
-class Upload(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    filename = db.Column(db.String(50))
-    data = db.Column(db.LargeBinary)
+#image to text router
+@api.resource('/imagetotext')
+class ImageToText(Resource):
+    def get(self):
+        return "GET: Welcome to the Image to text module"
     
-    def __init__(self, filename, data):
-        self.filename = filename
-        self.data = data
+    
+#pdf to text router
+@api.resource('/pdftotext')    
+class PDFToText(Resource):
+    def get(self):
+        return "GET:Welcome to the PDF to text module"
+    
+    
+#selective ocr router   
+@api.resource('/selectiveocr')  
+class SelectiveOCR(Resource):
+    def post(self):
+        if request.method == "POST":
+            return render_template('thankyou.html')
+        else:
+            print("Wrong place!")
+            
+
+#login router            
+@api.resource('/login')            
+class User(Resource):
+    def get(self):
+        print("Welcome to the new world")
+        return render_template('login.html')
+    
+    def post(self):
+        username = request.form['username']
+        password = request.form['password']
         
-    def __repr__(self):
-        return f"Filename is {self.filename}"
-    
+        return f"username: {username}\npassword: {password}"
 
-#route traffic from '/' to 
+
+#home router   
 @app.route('/', methods=['GET', 'POST'])
-def index():
+def home():
     
-    # random_number = random.randint(0,99999999)
+    if request.method == 'GET':
+        return render_template('index.html')
+    elif request.method == 'POST':       
+        print(request.form['value'])
+        value = request.form['value']
+        print(url_for(f'http://localhost:5000/{value}'))
+    else:
+        return "Error: Wrong method used to access API!"
     
-    #if it is a POST method
-    if request.method == 'POST':
-        
-        #store image name in variable
-        file = request.files['image']
-        
-        #Everything with access to flask app
-        with app.app_context():
-            
-            #
-            ## PART ONE ## - STORE IMAGE IN DB 
-            #
-            
-            #create tables
-            db.create_all()
-            
-            #create an object
-            upload = Upload(filename=file.filename, data=file.read())
-            
-            #create the database session
-            db.session.add(upload)
-            
-            #save the information
-            db.session.commit()
-            
-            #
-            ## PART TWO ## - PROCESS IMAGE ##
-            #
-            
-            #fetch info from table filter by filename
-            download = Upload.query.filter_by(filename=file.filename).first()
-            
-            #store image in uploads
-            with open(f"./uploads/{download.filename}.png", "wb") as f:
-                f.write(download.data)
+    
+#error handler router    
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html')
+    
 
-            #read image in opencv
-            image = cv.imread(f'./uploads/{download.filename}.png',0)
-                
-            #read the text from the image
-            text = pytesseract.image_to_string(image)
-            
-            #store filename in variable
-            file_name = download.filename
-            
-            #extract the file name from the file type
-            cut_name = file_name.split(".", 1)[0]
-            
-            #delete that record from db
-            delete = Upload.query.filter_by(filename=file.filename).delete()
-            
-            #open .txt file 
-            image_text = open(f'./text_files/{cut_name}.txt', 'w')
-            
-            #write text in file
-            image_text.write(text)
-            
-            #
-            #
-            # TESTS #
-            #testing#
-            # records = Upload.query.all()
-            # print(records)
-            # for record in records:
-                # print(record)
-            # print(text)
-            # print(cut_name)
-            # print(download.filename)
-            #
-            #
-            
-            #path to text file
-            path = f"./text_files/{cut_name}.txt"
-     
-            #convert the file to binary so that it can be sent
-            text_document = open(path, 'rb')
-            
-            #return the text file as download
-            return send_file(text_document, as_attachment=True, download_name=f"{cut_name}.txt", mimetype="text/plain")
-        
-    #return index page
-    return render_template('index.html')
-
-    
