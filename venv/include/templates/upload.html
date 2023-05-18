@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}
+<title></title>
+{% endblock %}
+
+
+{% block body %}
+<h1>UPLOAD FILE</h1>
+<form action="http://localhost:5000/selectiveocr" method="POST">
+    <input type="file" name="file" id="file">
+    <button type="submit" name="submit">Submit</button>
+</form>
+{% endblock %}
